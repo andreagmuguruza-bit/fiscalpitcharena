@@ -120,9 +120,6 @@
                                 </h2>
                                 <p class="text-xs text-slate-500 mt-0.5">Suma consolidada de las asignaciones de los 3 países representantes</p>
                             </div>
-                            <button onclick="resetAllData()" class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold transition flex items-center gap-1.5 border border-slate-200 shadow-sm">
-                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reiniciar
-                            </button>
                         </div>
 
                         <!-- Chart Bars Container -->
@@ -138,7 +135,7 @@
                 </div>
 
                 <!-- Individual Investor Status Card -->
-                <div class="glass-card p-6 rounded-3xl flex flex-col justify-between bg-white/90 backdrop-blur-sm">
+                <div class="glass-card p-6 rounded-3xl flex flex-col bg-white/90 backdrop-blur-sm">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2 pb-4 border-b border-slate-100">
                             <i data-lucide="shield-check" class="w-5 h-5 text-idbTeal"></i>
@@ -283,7 +280,10 @@
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
                 try {
-                    appState = JSON.parse(saved);
+                    const parsed = JSON.parse(saved);
+                    // Mantiene el país actual para que no haya conflicto al recargar
+                    parsed.activeInvestor = appState.activeInvestor; 
+                    appState = parsed;
                 } catch (e) { console.error("Error loading state", e); }
             }
         }
@@ -304,14 +304,16 @@
             window.addEventListener('storage', (e) => {
                 if (e.key === STORAGE_KEY) {
                     loadState();
-                    updatePresenterUI();
+                    if (currentView === 'presenter') {
+                        updatePresenterUI();
+                    }
                 }
             });
 
             // Poll storage every 1s as fallback
             setInterval(() => {
-                loadState();
                 if (currentView === 'presenter') {
+                    loadState();
                     updatePresenterUI();
                 }
             }, 1000);
@@ -331,6 +333,7 @@
                 invView.classList.add('hidden');
                 btnPres.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 bg-white text-idbBlue shadow-sm border border-slate-200";
                 btnInv.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 text-slate-500 hover:text-idbBlue";
+                loadState();
                 updatePresenterUI();
             } else {
                 presView.classList.add('hidden');
@@ -541,19 +544,6 @@
 
             document.getElementById('last-sync-time').innerText = `Última actualización: ${new Date().toLocaleTimeString()}`;
             lucide.createIcons();
-        }
-
-        function resetAllData() {
-            if (confirm("¿Estás seguro de reiniciar todas las asignaciones de los países representantes?")) {
-                appState.investors = {
-                    1: { name: "Perú", allocations: [0, 0, 0], submitted: false },
-                    2: { name: "Uruguay", allocations: [0, 0, 0], submitted: false },
-                    3: { name: "Chile", allocations: [0, 0, 0], submitted: false }
-                };
-                saveState();
-                updatePresenterUI();
-                if (currentView === 'investor') loadInvestorForm();
-            }
         }
     </script>
 </body>
